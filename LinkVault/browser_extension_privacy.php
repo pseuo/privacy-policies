@@ -119,7 +119,9 @@ if (!function_exists('app_path')) {
 }
 
 $alternateLanguage = $language === 'zh' ? 'en' : 'zh';
-$languageUrl = '?lang=' . $alternateLanguage;
+$languageUrl = getenv('STATIC_EXPORT') === '1'
+    ? ($alternateLanguage === 'zh' ? 'zh.html' : 'index.html')
+    : '?lang=' . $alternateLanguage;
 $linkVaultUrl = 'https://github.com/pseuo/LinkVault';
 $contactEmail = isset($contact) ? trim((string) $contact) : '';
 ?>

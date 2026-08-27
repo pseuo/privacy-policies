@@ -1,0 +1,57 @@
+name: Deploy privacy policies
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Build static pages
+        shell: bash
+        run: |
+          mkdir -p _site/LinkVault
+          mkdir -p _site/vTab
+          STATIC_EXPORT=1 php -r 'include "LinkVault/browser_extension_privacy.php";' > _site/LinkVault/index.html
+          STATIC_EXPORT=1 php -r '$_GET["lang"] = "zh"; include "LinkVault/browser_extension_privacy.php";' > _site/LinkVault/zh.html
+          STATIC_EXPORT=1 php -r 'include "vTab/privacy-policy.php";' > _site/vTab/index.html
+          STATIC_EXPORT=1 php -r '$_GET["lang"] = "zh"; include "vTab/privacy-policy.php";' > _site/vTab/zh.html
+          cp index.html _site/index.html
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

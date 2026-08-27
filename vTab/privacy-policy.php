@@ -1,6 +1,11 @@
 <?php
-$language = isset($_GET['lang']) && strtolower((string) $_GET['lang']) === 'zh' ? 'zh' : 'en';
+$requestedLanguage = strtolower((string) ($_GET['lang'] ?? ''));
+$language = in_array($requestedLanguage, ['zh', 'cn'], true) ? 'zh' : 'en';
 $isEnglish = $language === 'en';
+$alternateLanguage = $isEnglish ? 'zh' : 'en';
+$languageUrl = getenv('STATIC_EXPORT') === '1'
+  ? ($alternateLanguage === 'zh' ? 'zh.html' : 'index.html')
+  : '?lang=' . $alternateLanguage;
 ?>
 <!doctype html>
 <html lang="<?= $isEnglish ? 'en' : 'zh-CN' ?>">
@@ -22,7 +27,7 @@ $isEnglish = $language === 'en';
 </head>
 <body>
 <main>
-  <p><a href="?lang=<?= $isEnglish ? 'zh' : 'en' ?>"><?= $isEnglish ? '中文' : 'English' ?></a></p>
+  <p><a href="<?= htmlspecialchars($languageUrl, ENT_QUOTES, 'UTF-8') ?>"><?= $isEnglish ? '中文' : 'English' ?></a></p>
 <?php if ($isEnglish): ?>
   <h1>vTab New Tab Privacy Policy</h1>
   <p class="updated">Effective date: 2025-05-05</p>
