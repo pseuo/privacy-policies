@@ -82,12 +82,12 @@ jobs:
             fi
           }
 
-          export_page "LinkVault/browser_extension_privacy.php" _site/LinkVault/index.html en
-          export_page "LinkVault/browser_extension_privacy.php" _site/LinkVault/zh.htmlzh
-          export_page "vTab/privacy-policy.php"                _site/vTab/index.htmlen
-          export_page "vTab/privacy-policy.php"                _site/vTab/zh.html      zh
-          export_page "SlowScroll/privacy.php"                 _site/SlowScroll/index.html en
-          export_page "SlowScroll/privacy.php"                 _site/SlowScroll/zh.html   zh
+          export_page "LinkVault/browser_extension_privacy.php" _site/LinkVault/index.html   en
+          export_page "LinkVault/browser_extension_privacy.php" _site/LinkVault/zh.html      zh
+          export_page "vTab/privacy-policy.php"                _site/vTab/index.html          en
+          export_page "vTab/privacy-policy.php"                _site/vTab/zh.html             zh
+          export_page "SlowScroll/privacy.php"                 _site/SlowScroll/index.html    en
+          export_page "SlowScroll/privacy.php"                 _site/SlowScroll/zh.html       zh
 
           # SlowScroll 的同级样式表，必须一起发布（见文件头第 2 条）
           cp SlowScroll/privacy.css _site/SlowScroll/privacy.css
@@ -112,27 +112,40 @@ jobs:
             fi
           done
 
-          # 语言必须真的切换了，而不是两份都成了中文
-          for pair in \
-            "_site/LinkVault/index.html:en _site/LinkVault/zh.html:zh-CN" \
-            "_site/vTab/index.html:en _site/vTab/zh.html:zh-CN" \
-            "_site/SlowScroll/index.html:en _site/SlowScroll/zh.html:zh-CN"; do
-            en_file="${pair%%:*}"; rest="${pair#*:}"
-            zh_file="${rest%%:*}"; zh_lang="${rest##*:}"
-            en_lang="$(grep -o '<html lang="[^"]*"' "${en_file}" | head -1 | cut -d'"' -f2)"
+          # 语言必须真的切换了，而不是两份都成了中文。
+          # ⚠ 早先用 "文件:lang 文件:lang" 的字符串切分写法是错的：
+          #   for 会把它拆成两个词，${pair%%:*} 拿到的是错误的字段，
+          #   grep 于是去读一个不存在的文件名。改用函数传参，别再切字符串。
+          check_lang() {
+            local en_file="$1" zh_file="$2" got_en got_zh
+            # 文件不存在时直接返回：那属于上一段「缺少产物」的报错范围，
+            # 再拿 grep 去读一遍只会刷出一句误导性的 grep 错误。
+            if [ ! -s "${en_file}" ] || [ ! -s "${zh_file}" ]; then
+              return 0
+            fi
+            got_en="$(grep -o '<html lang="[^"]*"' "${en_file}" | head -1 | cut -d'"' -f2)"
             got_zh="$(grep -o '<html lang="[^"]*"' "${zh_file}" | head -1 | cut -d'"' -f2)"
-            if [ "${en_lang}" != "en" ] || [ "${got_zh}" != "${zh_lang}" ]; then
-              echo "::error::语言导出错位：${en_file}=${en_lang}(应为 en)  ${zh_file}=${got_zh}(应为 ${zh_lang})"
+            if [ "${got_en}" != "en" ] || [ "${got_zh}" != "zh-CN" ]; then
+              echo "::error::语言导出错位：${en_file}=${got_en}(应为 en)  ${zh_file}=${got_zh}(应为 zh-CN)"
               fail=1
             fi
-          done
+          }
 
-          # PHP 报错会混进 HTML，必须为零
+          check_lang _site/LinkVault/index.html  _site/LinkVault/zh.html
+          check_lang _site/vTab/index.html       _site/vTab/zh.html
+          check_lang _site/SlowScroll/index.html _site/SlowScroll/zh.html
+
+          # PHP 报错会混进 HTML，必须为零。
+          # grep 无匹配时返回 1，这正是「干净」的正常情形，
+          # 所以放进 if 的判据里，而不是让它触发 set -e。
           if grep -rniE 'PHP (Warning|Notice|Fatal|Deprecated|Parse error)' _site; then
             echo "::error::产物中含 PHP 报错"
             fail=1
           fi
 
+          if [ "${fail}" -ne 0 ]; then
+            echo "::error::构建校验未通过，已阻止部署"
+          fi
           exit "${fail}"
 
       - name: Upload Pages artifact
