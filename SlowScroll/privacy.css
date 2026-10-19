@@ -1,0 +1,688 @@
+/* ============================================================
+   漫卷 SlowScroll · 隐私说明页样式
+   ------------------------------------------------------------
+   与扩展内 shared/tokens.css 同源：同一套品牌色阶、玻璃层、
+   极光背景与排版刻度，让政策页与产品本身看起来是同一个东西。
+
+   ⚠ 两处设计约束（与项目 tokens.css 的结论一致）：
+     1. WCAG AA 是底线。正文 ≥ 4.5:1，大字与非文本 ≥ 3:1。
+        玻璃是半透明层，文字最终颜色取决于背后的极光色团，
+        因此所有文字色都按「最差叠加背景」选取，而非色卡标称值。
+     2. prefers-reduced-motion 下所有动效归零（下方统一处理），
+        政策页不该有会晃眼的过渡。
+
+   无外链资源：无 CDN、无 web font、无统计脚本。
+   字体走系统栈，避免为了排版引入一次第三方请求——
+   在一份宣称「不收集」的页面上加载外部资源是自相矛盾的。
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Brand Ramp（与 tokens.css 同值） ---- */
+  --brand-50:  #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-300: #a5b4fc;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --violet-600: #7c3aed;
+  --grad-from: #5b5ee8;
+  --grad-to:   #7c3aed;
+
+  /* ---- Semantic ---- */
+  --color-success: #047857;   /* 白字底 5.48:1；作前景更深，玻璃上 ≥ 5.4:1 */
+  --color-info:    #2563eb;
+  --color-error:   #dc2626;
+  --color-warn-ink:#9a3412;   /* 琥珀前景，玻璃上 6.21:1 */
+
+  /* ---- Text ---- */
+  --text-strong: #151a26;
+  --text-body:   #3d4557;
+  --text-muted:  #50586b;     /* 最差叠加底 5.25:1，达 AA 正文 */
+  --text-inverse:#ffffff;
+
+  /* ---- Glass ---- */
+  --glass-fill:        rgba(255, 255, 255, 0.46);
+  --glass-fill-strong: rgba(255, 255, 255, 0.62);
+  --glass-fill-subtle: rgba(255, 255, 255, 0.30);
+  --glass-stroke:      rgba(255, 255, 255, 0.72);
+  --glass-stroke-soft: rgba(255, 255, 255, 0.42);
+  --glass-blur: 26px;
+  --glass-saturate: 165%;
+
+  /* ---- Elevation ---- */
+  --shadow-sm: 0 2px 8px rgba(21, 26, 38, 0.07), 0 1px 2px rgba(21, 26, 38, 0.04);
+  --shadow-md: 0 8px 24px rgba(21, 26, 38, 0.09), 0 2px 6px rgba(21, 26, 38, 0.05);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+  /* ---- Radius ---- */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* ---- Spacing（4px 基准，刻度连续） ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---- Typography ---- */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+               "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs:  12px;
+  --text-sm:  13px;
+  --text-md:  14px;
+  --text-base:15px;
+  --text-lg:  17px;
+  --text-xl:  20px;
+  --text-2xl: 26px;
+  --text-3xl: 34px;
+
+  --dur-fast: 140ms;
+  --dur-normal: 240ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --focus-ring-color: var(--brand-500);
+  --focus-ring-halo: rgba(255, 255, 255, 0.9);
+
+  /* 正文测宽：中文一行约 42 字，超过后换行明显更易读 */
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-strong: #f2f5fb;
+    --text-body:   #cbd3e1;
+    --text-muted:  #97a1b5;
+
+    --color-success:  #34d399;
+    --color-info:     #93c5fd;
+    --color-error:    #f87171;
+    --color-warn-ink: #f59e0b;
+
+    --glass-fill:        rgba(38, 43, 58, 0.50);
+    --glass-fill-strong: rgba(38, 43, 58, 0.66);
+    --glass-fill-subtle: rgba(38, 43, 58, 0.34);
+    --glass-stroke:      rgba(255, 255, 255, 0.14);
+    --glass-stroke-soft: rgba(255, 255, 255, 0.08);
+    --shadow-inset-top:  inset 0 1px 0 rgba(255, 255, 255, 0.10);
+
+    --focus-ring-color: var(--brand-300);
+    --focus-ring-halo: rgba(20, 24, 35, 0.9);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.34);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.42);
+  }
+}
+
+/* ============================================================
+   Reset
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.75;            /* 长文段落需要比 UI 更松的行距 */
+  color: var(--text-body);
+  background: #f4f6fc;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; color: var(--text-strong); line-height: 1.3; }
+p { margin: 0; }
+ul, ol, dl, dd { margin: 0; padding: 0; }
+li { list-style: none; }
+a { color: var(--color-info); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--brand-600); }
+@media (prefers-color-scheme: dark) { a:hover { color: var(--brand-300); } }
+
+code, pre, kbd {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+code {
+  padding: 0.12em 0.4em;
+  border-radius: 6px;
+  background: var(--glass-fill-subtle);
+  border: 1px solid var(--glass-stroke-soft);
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 3px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--focus-ring-halo);
+}
+
+/* ============================================================
+   Aurora · 玻璃必须有背景才成立
+   ============================================================ */
+.ss-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(1200px 620px at 12% -8%,  rgba(139, 92, 246, 0.30), transparent 62%),
+    radial-gradient(980px 520px at 92% 4%,   rgba(34, 211, 238, 0.26),  transparent 60%),
+    radial-gradient(900px 620px at 78% 96%,   rgba(236, 72, 153, 0.20),  transparent 62%),
+    radial-gradient(760px 520px at 4% 88%,    rgba(99, 102, 241, 0.24),  transparent 60%),
+    linear-gradient(168deg, #f4f6fc 0%, #eaeef9 46%, #f6f4fb 100%);
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #0e1119; }
+  .ss-aurora {
+    background:
+      radial-gradient(1200px 620px at 12% -8%,  rgba(139, 92, 246, 0.30), transparent 62%),
+      radial-gradient(980px 520px at 92% 4%,   rgba(34, 211, 238, 0.20),  transparent 60%),
+      radial-gradient(900px 620px at 78% 96%,   rgba(236, 72, 153, 0.18),  transparent 62%),
+      radial-gradient(760px 520px at 4% 88%,    rgba(79, 70, 229, 0.26),  transparent 60%),
+      linear-gradient(168deg, #0e1119 0%, #141826 48%, #10121c 100%);
+  }
+}
+
+/* 动效统一降级：政策页不需要任何会晃眼的过渡 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Skip Link · 键盘用户第一项
+   ============================================================ */
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  translate: -50% -120%;
+  z-index: 20;
+  padding: var(--space-3) var(--space-6);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--brand-600);
+  color: var(--text-inverse);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: translate var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus-visible { translate: -50% 0; color: var(--text-inverse); }
+
+/* ============================================================
+   Page Shell
+   ============================================================ */
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-6) var(--space-12);
+}
+
+/* ---- Hero ---- */
+.hero {
+  text-align: center;
+  margin-bottom: var(--space-12);
+}
+
+.hero__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.brand-mark {
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero__title {
+  margin-top: var(--space-4);
+  font-size: var(--text-3xl);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.hero__sub {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-lg);
+}
+
+.hero__lede {
+  max-width: 60ch;
+  margin: var(--space-6) auto 0;
+  color: var(--text-body);
+  font-size: var(--text-lg);
+  line-height: 1.7;
+}
+
+/* 零收集徽标：吸睛且语义准确（是断言，不是承诺） */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-6);
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-subtle);
+  border: 1px solid var(--glass-stroke-soft);
+  color: var(--color-success);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+.meta__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-stroke-soft);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-top);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+          backdrop-filter: blur(16px) saturate(165%);
+}
+.meta dt {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.meta dd {
+  color: var(--text-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* ============================================================
+   Layout · 桌面侧栏目录 + 正文，移动端单列
+   ============================================================ */
+/* ⚠ 列宽必须与 DOM 顺序对齐，且两列都写 minmax(0, 1fr) 形式的显式下限。
+     DOM 里 .toc 在前、.main 在后（窄屏下目录折到正文上方，读序更自然），
+     于是「1fr 宽列」判给了目录而不是正文。写成 minmax(0,1fr) 260px 时
+     目录拿到 780px 宽列、正文被挤进 260px 窄列——实测正文宽度等于
+     侧栏宽度，且表格的 min-content 撑出 36px 横向溢出。
+     正确写法：固定宽列在前（260px 给目录），弹性列在后给正文；
+     minmax(0,…) 则保证长内容只撑内部滚动、不参与轨道下限计算。 */
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.main { min-width: 0; }
+
+.toc {
+  position: sticky;
+  top: var(--space-8);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--shadow-md), var(--shadow-inset-top);
+}
+
+.toc__title {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.toc__list { counter-reset: toc; }
+.toc__list li + li { margin-top: 2px; }
+.toc__list a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition:
+    background-color var(--dur-fast) linear,
+    color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear;
+}
+.toc__list a:hover {
+  background: var(--glass-fill-strong);
+  color: var(--text-strong);
+  border-left-color: var(--brand-500);
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .toc { position: static; }
+  .page { padding: var(--space-10) var(--space-4) var(--space-10); }
+  .hero__title { font-size: var(--text-2xl); }
+  .hero__lede { font-size: var(--text-base); }
+}
+
+/* ============================================================
+   Summary · 先给结论
+   ============================================================ */
+.glass-card {
+  position: relative;
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), var(--shadow-inset-top);
+}
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9) 22%,
+                              rgba(255,255,255,0.9) 78%, transparent);
+  pointer-events: none;
+}
+
+.summary {
+  padding: var(--space-8);
+  margin-bottom: var(--space-10);
+}
+.summary__title {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  margin-bottom: var(--space-5);
+}
+
+.summary__row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  align-items: baseline;
+}
+.summary__row + .summary__row { border-top: 1px solid var(--glass-stroke-soft); }
+.summary__row dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+.summary__row dd { color: var(--text-body); }
+
+@media (max-width: 620px) {
+  .summary { padding: var(--space-5); }
+  .summary__row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+
+/* ============================================================
+   Chapter
+   ============================================================ */
+.chapter { margin-bottom: var(--space-12); scroll-margin-top: var(--space-8); }
+
+.chapter__h {
+  position: relative;
+  font-size: var(--text-xl);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--glass-stroke-soft);
+}
+/* 目录锚点定位到标题顶而非字形顶，否则滚动后标题会贴边 */
+.chapter__anchor {
+  position: absolute;
+  top: -40px;
+  left: 0;
+}
+
+.chapter__p {
+  max-width: var(--measure);
+  margin-bottom: var(--space-4);
+  color: var(--text-body);
+}
+
+/* ---- 权限表 ---- */
+.table-wrap {
+  margin: var(--space-5) 0 var(--space-4);
+  overflow-x: auto;              /* 窄屏横向滚动，不撑破布局 */
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-stroke-soft);
+  background: var(--glass-fill-subtle);
+}
+
+.table {
+  width: 100%;
+  min-width: 460px;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.table th, .table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.6;
+}
+.table thead th {
+  background: var(--glass-fill-strong);
+  color: var(--text-strong);
+  font-weight: 650;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--glass-stroke-soft);
+}
+.table tbody th {                 /* 行首为 scope="row"，读屏可播报列名 */
+  color: var(--text-strong);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.table tbody tr + tr th,
+.table tbody tr + tr td { border-top: 1px solid var(--glass-stroke-soft); }
+.table td { color: var(--text-body); }
+
+/* ---- 存储键清单 ---- */
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-4) 0;
+}
+.kv__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--glass-fill-subtle);
+  border: 1px solid var(--glass-stroke-soft);
+}
+.kv__key {
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--text-strong);
+}
+.kv__desc { color: var(--text-body); font-size: var(--text-sm); }
+
+/* ---- 权利列表 ---- */
+.bullets { margin: var(--space-4) 0; display: grid; gap: var(--space-2); }
+.bullets li {
+  position: relative;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-10);
+  border-radius: var(--radius-sm);
+  background: var(--glass-fill-subtle);
+  border: 1px solid var(--glass-stroke-soft);
+  max-width: var(--measure);
+}
+/* 用 ::before 画点而非 list-style，避免不同浏览器默认标记不一 */
+.bullets li::before {
+  content: "";
+  position: absolute;
+  left: var(--space-5);
+  top: calc(var(--space-3) + 0.55em);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+}
+.bullets__label {
+  display: block;
+  color: var(--text-strong);
+  font-weight: 650;
+  font-size: var(--text-md);
+}
+.bullets__text { color: var(--text-body); font-size: var(--text-sm); }
+
+/* ---- 提示块 ---- */
+.note {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  max-width: var(--measure);
+  margin: var(--space-6) 0 0;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--glass-fill-subtle);
+  border: 1px solid var(--glass-stroke-soft);
+  border-left: 3px solid var(--color-info);
+}
+.note__mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-info);
+  color: #ffffff;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  margin-top: 3px;
+}
+.note__text { color: var(--text-body); font-size: var(--text-sm); line-height: 1.7; }
+
+/* ---- 联系方式 ---- */
+.contact { margin: var(--space-5) 0 var(--space-2); }
+.contact__mail {
+  display: inline-block;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--grad-from), var(--grad-to));
+  color: var(--text-inverse);
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.28) inset, 0 6px 18px rgba(79, 70, 229, 0.34);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-normal) var(--ease-out);
+}
+.contact__mail:hover {
+  color: var(--text-inverse);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.32) inset, 0 10px 26px rgba(79, 70, 229, 0.42);
+}
+
+/* 占位符守卫：只在邮箱还是 you@example.com 时出现，
+   颜色刻意不同于正文，避免被误读为正式声明的一部分 */
+.todo {
+  max-width: var(--measure);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(154, 52, 18, 0.5);
+  background: rgba(154, 52, 18, 0.08);
+  color: var(--color-warn-ink);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+@media (prefers-color-scheme: dark) {
+  .todo {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.10);
+  }
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  margin-top: var(--space-16);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--glass-stroke-soft);
+  text-align: center;
+}
+.footer__open { color: var(--text-body); font-size: var(--text-sm); font-weight: 600; }
+.footer__note { margin-top: var(--space-1); font-size: var(--text-xs); }
+
+.ss-muted { color: var(--text-muted); }
+
+/* ============================================================
+   Print · 商店审核与用户留存常需打印/存档
+   ============================================================ */
+@media print {
+  .ss-aurora { display: none; }
+  body { background: #ffffff; color: #000000; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  .layout { display: block; }
+  .toc { display: none; }             /* 打印时目录无价值，占篇幅 */
+  .glass-card, .summary { background: none; border: none; box-shadow: none; padding: 0; }
+  .note, .kv__item, .bullets li, .table-wrap {
+    background: none;
+    border: 1px solid #cccccc;
+  }
+  .contact__mail {
+    background: none;
+    color: #000000;
+    border: 1px solid #000000;
+    box-shadow: none;
+  }
+  /* 外部链接在屏幕上隐藏地址，打印时必须显形，否则读者无从核对。
+     只匹配 http(s) 与 mailto：站内锚点（#main）打印出来是噪音。 */
+  a[href^="http"]::after,
+  a[href^="mailto"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #444444;
+  }
+  .chapter { break-inside: avoid; }
+  .todo { display: none; }            /* 占位提示不该进打印稿 */
+}
