@@ -1,3 +1,31 @@
+# ============================================================
+# 部署隐私政策站点到 GitHub Pages
+# ------------------------------------------------------------
+# 站点结构：每个产品一个子目录，内含 index.html(英) + zh.html(中)。
+# 构建方式：用 PHP 把 .php 源文件静态导出成 .html——因为这些页面
+# 本来就是 PHP 模板，语言选择靠 $_GET['lang']，静态托管无法处理，
+# 必须在构建期把两种语言各导出一份。
+#
+# ⚠ 三处踩过的坑，改动时请一并守住：
+
+#1. SlowScroll 必须显式指定 lang。
+#    它的语言判定是「URL 显式值 > 浏览器 Accept-Language > zh兜底」。
+#    CLI 下 $_SERVER 为空 → 协商无结论 → 落到 zh。
+#    于是不加 $_GET["lang"]="en" 的话，它导出的 index.html
+#    也会是中文，看起来像「英文页面没生效」。
+
+#  2. SlowScroll 的样式表是同级外链（privacy.css）。
+#     只导 HTML 不拷CSS，发布后整页无样式裸奔，而且不会报错。
+#     三个产品里只有它把CSS 拆开了，所以这行 cp 不能省。
+
+#  3. .nojekyll 不是这个站点需要的。
+#     只有「Deploy from a branch」模式才会跑 Jekyll；而本工作流用的是
+#     Actions 发布，产物按原样上线，Jekyll 不参与。
+#     并且 upload-pages-artifact 从 v4 起默认排除点开头的文件，
+#     那句 touch .nojekyll 实际上根本进不了产物，是个假动作。
+#     此处不再写它——留着只会让人误以为有保护。
+# ============================================================
+
 name: Deploy privacy policies
 
 on:
@@ -7,6 +35,9 @@ on:
       - master
   workflow_dispatch:
 
+# 仅授予部署所需的最小权限。
+# id-token: write 不能省——缺了它deploy-pages 无法铸造 OIDC token，
+# 会以 403 失败。
 permissions:
   contents: read
   pages: write
@@ -14,14 +45,16 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # 不打断进行中的部署：半替换的站点比落后一个提交的站点更糟。
+  cancel-in-progress: false
 
 jobs:
   build:
+    name: Build static pages
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -31,27 +64,90 @@ jobs:
       - name: Build static pages
         shell: bash
         run: |
-          mkdir -p _site/LinkVault
-          mkdir -p _site/vTab
-          STATIC_EXPORT=1 php -r 'include "LinkVault/browser_extension_privacy.php";' > _site/LinkVault/index.html
-          STATIC_EXPORT=1 php -r '$_GET["lang"] = "zh"; include "LinkVault/browser_extension_privacy.php";' > _site/LinkVault/zh.html
-          STATIC_EXPORT=1 php -r 'include "vTab/privacy-policy.php";' > _site/vTab/index.html
-          STATIC_EXPORT=1 php -r '$_GET["lang"] = "zh"; include "vTab/privacy-policy.php";' > _site/vTab/zh.html
+          set -euo pipefail
+
+          mkdir -p _site/LinkVault _site/vTab _site/SlowScroll
+
+          # export_page <源文件> <目标文件> <语言>
+          # 语言显式指定，不依赖 Accept-Language 协商——CLI 下没有协商可言。
+          export_page() {
+            local src="$1" dst="$2" lang="$3"
+            STATIC_EXPORT=1 php -d error_reporting=E_ALL \
+              -r "\$_GET['lang']='${lang}'; include '${src}';" > "${dst}"
+            # 导出为空或过短说明 PHP 挂了（语法错、致命错误），
+            # 但退出码可能仍是 0。显式拦一道，避免发布出空白政策页。
+            if [ ! -s "${dst}" ] || [ "$(wc -c < "${dst}")" -lt 500 ]; then
+              echo "::error::构建失败或产物异常：${dst}（$(wc -c < "${dst}") 字节）"
+              exit 1
+            fi
+          }
+
+          export_page "LinkVault/browser_extension_privacy.php" _site/LinkVault/index.html en
+          export_page "LinkVault/browser_extension_privacy.php" _site/LinkVault/zh.htmlzh
+          export_page "vTab/privacy-policy.php"                _site/vTab/index.htmlen
+          export_page "vTab/privacy-policy.php"                _site/vTab/zh.html      zh
+          export_page "SlowScroll/privacy.php"                 _site/SlowScroll/index.html en
+          export_page "SlowScroll/privacy.php"                 _site/SlowScroll/zh.html   zh
+
+          # SlowScroll 的同级样式表，必须一起发布（见文件头第 2 条）
+          cp SlowScroll/privacy.css _site/SlowScroll/privacy.css
+
           cp index.html _site/index.html
-          touch _site/.nojekyll
+
+      - name: Verify build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+
+          # 首页里的三个链接目标必须真实存在，否则用户点进去就是 404。
+          # 这类问题不会让构建失败，只会在线上暴露——所以在构建期拦下。
+          for path in LinkVault/index.html LinkVault/zh.html \
+                      vTab/index.html      vTab/zh.html      \
+                      SlowScroll/index.html SlowScroll/zh.html \
+                      SlowScroll/privacy.css index.html; do
+            if [ ! -s "_site/${path}" ]; then
+              echo "::error::缺少产物或为空：_site/${path}"
+              fail=1
+            fi
+          done
+
+          # 语言必须真的切换了，而不是两份都成了中文
+          for pair in \
+            "_site/LinkVault/index.html:en _site/LinkVault/zh.html:zh-CN" \
+            "_site/vTab/index.html:en _site/vTab/zh.html:zh-CN" \
+            "_site/SlowScroll/index.html:en _site/SlowScroll/zh.html:zh-CN"; do
+            en_file="${pair%%:*}"; rest="${pair#*:}"
+            zh_file="${rest%%:*}"; zh_lang="${rest##*:}"
+            en_lang="$(grep -o '<html lang="[^"]*"' "${en_file}" | head -1 | cut -d'"' -f2)"
+            got_zh="$(grep -o '<html lang="[^"]*"' "${zh_file}" | head -1 | cut -d'"' -f2)"
+            if [ "${en_lang}" != "en" ] || [ "${got_zh}" != "${zh_lang}" ]; then
+              echo "::error::语言导出错位：${en_file}=${en_lang}(应为 en)  ${zh_file}=${got_zh}(应为 ${zh_lang})"
+              fail=1
+            fi
+          done
+
+          # PHP 报错会混进 HTML，必须为零
+          if grep -rniE 'PHP (Warning|Notice|Fatal|Deprecated|Parse error)' _site; then
+            echo "::error::产物中含 PHP 报错"
+            fail=1
+          fi
+
+          exit "${fail}"
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
   deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
