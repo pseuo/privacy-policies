@@ -1,27 +1,808 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Privacy Policies</title>
-    <style>
-        :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        body { margin: 0; background: #f5f7fb; color: #202534; line-height: 1.7; }
-        main { max-width: 640px; margin: 32px auto; padding: 40px 48px; background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(26, 39, 65, .08); }
-        h1 { margin-top: 0; font-size: 30px; line-height: 1.3; }
-        ul { padding-left: 24px; }
-        a { color: #1769e0; }
-        @media (max-width: 640px) { main { margin: 0; padding: 28px 20px; border-radius: 0; } h1 { font-size: 25px; } }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policies</title>
+<meta name="description" content="Privacy policies for our browser extensions — what each one collects, where that data goes, and how you take control back.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#eef1fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1119" media="(prefers-color-scheme: dark)">
+
+<!-- 语言在首绘前定档。渲染由脚本接管后，DOM 中只会存在一种语言，
+     因此这个早期判定只负责避免「先闪英文再切中文」。 -->
+<script>
+(function () {
+    var lang;
+    try { lang = localStorage.getItem('pp-lang'); } catch (e) { lang = null; }
+    if (lang !== 'zh' && lang !== 'en') {
+        lang = (navigator.language || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+    }
+    document.documentElement.setAttribute('data-lang', lang);
+})();
+</script>
+
+<style>
+/* ============================================================
+   隐私政策索引 · 设计系统
+   ------------------------------------------------------------
+   视觉语言与 SlowScroll 政策页同源（同一套极光 + 玻璃 tokens），
+   两页因此看起来像同一个产品家族的手笔，而不是两个陌生人写的。
+
+   ⚠ 四条硬约束，改动时一并守住：
+
+     1. WCAG AA 是底线（正文 ≥ 4.5:1，非文本 ≥ 3:1）。
+        玻璃是半透明层，文字最终颜色取决于背后极光色团的强度，
+        所以所有文字色都按「最差叠加背景」选取，而不是取色卡标称值。
+        改 --glass-fill 的透明度时，必须回头复核这些文字色。
+
+     2. 零外部请求：无 CDN、无 web font、无统计脚本。
+        玻璃是纯 CSS，不产生请求，因此这个约束拦不住视觉升级。
+        字体走系统栈——在一份宣称「不收集」的页面上加载第三方
+        字体，是自相矛盾的。
+
+     3. prefers-reduced-motion 下所有动效归零。
+
+     4. 单一数据源：产品文案只存在于 JS 的 PRODUCTS 数组里。
+        新增产品 = 往数组里加一项，不要在 HTML 里复制卡片 DOM。
+   ============================================================ */
+
+/* ============================================================
+   1 · Tokens
+   ============================================================ */
+:root {
+    color-scheme: light;
+
+    /* ---- 文字：按「最差叠加底」选取，非色卡标称 ---- */
+    --text-strong: #151a26;
+    --text-body:   #3d4557;
+    --text-muted:  #50586b;    /* 最差叠加底 5.25:1，达 AA 正文 */
+    --text-inverse:#ffffff;
+
+    /* ---- 玻璃层 ---- */
+    --glass-fill:        rgba(255, 255, 255, 0.52);
+    --glass-fill-strong: rgba(255, 255, 255, 0.70);
+    --glass-fill-subtle: rgba(255, 255, 255, 0.32);
+    --glass-stroke:      rgba(255, 255, 255, 0.75);
+    --glass-stroke-soft: rgba(255, 255, 255, 0.45);
+    --glass-blur:    26px;
+    --glass-saturate:165%;
+
+    /* ---- 交互色 ---- */
+    --brand-500: #4f46e5;
+    --brand-300: #a5b4fc;
+    --link:      #3b3ba8;
+    --link-hover:#2f2f8f;
+
+    /* ---- 阴影 ---- */
+    --shadow-sm: 0 2px 8px rgba(21, 26, 38, .07), 0 1px 2px rgba(21, 26, 38, .04);
+    --shadow-md: 0 10px 30px rgba(21, 26, 38, .10), 0 2px 8px rgba(21, 26, 38, .05);
+    --shadow-lift: 0 20px 50px rgba(21, 26, 38, .16), 0 4px 12px rgba(21, 26, 38, .07);
+    --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, .9);
+
+    /* ---- 圆角 ---- */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-pill: 999px;
+
+    /* ---- 间距（4px 基准） ---- */
+    --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+    --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
+
+    /* ---- 字体 ---- */
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+            "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --dur: 200ms;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+
+    --focus-ring: var(--brand-500);
+    --focus-halo: rgba(255, 255, 255, .92);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+
+        --text-strong: #f2f5fb;
+        --text-body:   #cbd3e1;
+        --text-muted:  #9aa5b8;
+        --text-inverse:#0e1119;
+
+        --glass-fill:        rgba(38, 43, 58, 0.55);
+        --glass-fill-strong: rgba(38, 43, 58, 0.72);
+        --glass-fill-subtle: rgba(38, 43, 58, 0.36);
+        --glass-stroke:      rgba(255, 255, 255, 0.16);
+        --glass-stroke-soft: rgba(255, 255, 255, 0.09);
+
+        --brand-500: #a5b4fc;
+        --brand-300: #c7d2fe;
+        --link:      #b9c0ff;
+        --link-hover:#d5d9ff;
+
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, .34);
+        --shadow-md: 0 12px 34px rgba(0, 0, 0, .44);
+        --shadow-lift: 0 24px 60px rgba(0, 0, 0, .56);
+        --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, .10);
+
+        --focus-ring: var(--brand-300);
+        --focus-halo: rgba(14, 17, 25, .9);
+    }
+}
+
+/* ============================================================
+   2 · Reset
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html, body { margin: 0; padding: 0; }
+
+body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-body);
+    background: #eef1fb;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 { margin: 0; color: var(--text-strong); font-weight: 600; line-height: 1.15; }
+p { margin: 0; }
+ul, ol, dl, dd { margin: 0; padding: 0; }
+li { list-style: none; }
+
+a { color: var(--link); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--link-hover); text-decoration-thickness: 2px; }
+
+:focus { outline: none; }
+:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--focus-halo);
+}
+
+.sr-only {
+    position: absolute; width: 1px; height: 1px;
+    margin: -1px; padding: 0; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* ============================================================
+   3 · 极光背景
+   玻璃必须有背景才成立——没有底色的 backdrop-filter 只是灰。
+   纯 CSS 静态层，不触发重绘。
+   ============================================================ */
+.aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+        radial-gradient(1100px 600px at 12% -6%,  rgba(139, 92, 246, .30), transparent 62%),
+        radial-gradient(900px 520px at 92% 6%,    rgba(34, 211, 238, .24),  transparent 60%),
+        radial-gradient(860px 620px at 80% 98%,   rgba(236, 72, 153, .18),  transparent 62%),
+        radial-gradient(720px 520px at 4% 90%,    rgba(99, 102, 241, .24),  transparent 60%),
+        linear-gradient(168deg, #eef1fb 0%, #e8ecf9 46%, #f4f1fa 100%);
+}
+@media (prefers-color-scheme: dark) {
+    body { background: #0e1119; }
+    .aurora {
+        background:
+            radial-gradient(1100px 600px at 12% -6%,  rgba(139, 92, 246, .32), transparent 62%),
+            radial-gradient(900px 520px at 92% 6%,    rgba(34, 211, 238, .18), transparent 60%),
+            radial-gradient(860px 620px at 80% 98%,   rgba(236, 72, 153, .16), transparent 62%),
+            radial-gradient(720px 520px at 4% 90%,    rgba(79, 70, 229, .28), transparent 60%),
+            linear-gradient(168deg, #0e1119 0%, #141826 48%, #10121c 100%);
+    }
+}
+
+/* 玻璃通用表面 */
+.glass {
+    position: relative;
+    background: var(--glass-fill);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-stroke);
+    box-shadow: var(--shadow-md), var(--shadow-inset-top);
+}
+/* 顶部高光：玻璃的厚度感全靠这一条 1px 线 */
+.glass::before {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 1px;
+    background: linear-gradient(90deg, transparent,
+                rgba(255,255,255,.9) 22%, rgba(255,255,255,.9) 78%, transparent);
+    pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+    .glass::before {
+        background: linear-gradient(90deg, transparent,
+                    rgba(255,255,255,.18) 22%, rgba(255,255,255,.18) 78%, transparent);
+    }
+}
+
+/* ============================================================
+   4 · Skip link
+   ============================================================ */
+.skip-link {
+    position: fixed; left: var(--s4); top: 0; z-index: 30;
+    translate: 0 -160%;
+    padding: var(--s3) var(--s5);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    background: var(--brand-500); color: var(--text-inverse);
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    transition: translate var(--dur) var(--ease);
+}
+.skip-link:focus-visible { translate: 0 0; color: var(--text-inverse); }
+
+/* ============================================================
+   5 · Shell
+   ============================================================ */
+.shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--s7) var(--s5) var(--s9);
+}
+
+/* ============================================================
+   6 · Hero
+   ============================================================ */
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--s5);
+    align-items: start;
+    padding-bottom: var(--s7);
+}
+
+.hero__eyebrow {
+    display: inline-flex; align-items: center; gap: var(--s2);
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 650;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-muted);
+}
+.hero__eyebrow::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--brand-500);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-500) 18%, transparent);
+}
+
+.hero__title {
+    margin-top: var(--s4);
+    font-family: var(--serif);
+    font-size: clamp(40px, 6.2vw, 78px);
+    font-weight: 500;
+    letter-spacing: -.045em;
+    line-height: 1.02;
+    text-wrap: pretty;
+    max-width: 16ch;
+}
+
+.hero__lede {
+    margin-top: var(--s5);
+    max-width: 60ch;
+    font-size: clamp(16px, 1.5vw, 18px);
+    line-height: 1.72;
+    text-wrap: pretty;
+}
+
+/* 本页自身的完整性声明：首屏给结论，页脚给凭据，刻意呼应 */
+.integrity {
+    display: flex; flex-wrap: wrap; gap: var(--s2);
+    margin-top: var(--s5);
+}
+.integrity li {
+    padding: 5px 13px;
+    border: 1px solid var(--glass-stroke-soft);
+    border-radius: var(--radius-pill);
+    background: var(--glass-fill-subtle);
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
+            backdrop-filter: blur(10px) saturate(150%);
+    color: var(--text-body);
+    font-size: 13px; font-weight: 550;
+    white-space: nowrap;
+}
+.integrity li::before { content: "✓"; margin-right: 7px; color: var(--brand-500); font-weight: 700; }
+
+/* ---- 语言切换 ---- */
+.lang {
+    display: inline-flex; padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--glass-fill);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-stroke);
+    box-shadow: var(--shadow-sm), var(--shadow-inset-top);
+}
+.lang button {
+    /* 触控目标高度接近 44px 下限 */
+    min-height: 40px; min-width: 68px;
+    padding: 6px 16px;
+    border: 0; border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.lang button:hover { color: var(--text-strong); }
+.lang button[aria-pressed="true"] {
+    background: var(--brand-500); color: #fff;
+    box-shadow: var(--shadow-sm);
+}
+@media (prefers-color-scheme: dark) {
+    .lang button[aria-pressed="true"] { color: #12142a; }
+}
+
+/* ============================================================
+   7 · 卡片网格
+   ------------------------------------------------------------
+   auto-fill + minmax：3 个排 3 列，4 个自动成 2+2，5 个成 3+2。
+   产品数量变化时不需要改 CSS——这是选它的唯一理由。
+   ============================================================ */
+.grid-head {
+    display: flex; align-items: baseline; gap: var(--s3);
+    margin-bottom: var(--s4);
+    padding-bottom: var(--s3);
+    border-bottom: 1px solid var(--glass-stroke-soft);
+}
+.grid-head h2 {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 650;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-muted);
+}
+.grid-head__count {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text-muted); opacity: .8;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--s5);
+}
+
+/* ---- 卡片 ---- */
+.card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--s5) var(--s5) var(--s4);
+    border-radius: var(--radius-lg);
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.card:hover,
+.card:focus-within {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift), var(--shadow-inset-top);
+}
+
+.card__top {
+    display: flex; align-items: center; gap: var(--s3);
+    margin-bottom: var(--s4);
+}
+
+.card__num {
+    display: inline-flex; align-items: center; gap: var(--s2);
+    font-family: var(--mono); font-size: 11px; font-weight: 650;
+    letter-spacing: .1em;
+    color: var(--card-accent, var(--text-muted));
+}
+.card__num::before {
+    content: ""; width: 8px; height: 8px; border-radius: 2px;
+    background: var(--card-accent, var(--brand-500));
+}
+
+.card__name {
+    font-family: var(--serif);
+    font-size: 27px; font-weight: 500;
+    letter-spacing: -.03em; line-height: 1.1;
+    margin-left: auto; text-align: right;
+}
+.card__name a { color: var(--text-strong); text-decoration: none; }
+.card__name a::after { content: ""; position: absolute; inset: 0; }
+.card__name a:hover { color: var(--link); }
+
+.card__kind {
+    margin-bottom: var(--s4);
+    color: var(--text-muted);
+    font-size: 13.5px;
+}
+
+/* ---- 三问：收集什么 / 发往哪里 / 你的控制 ---- */
+.qa { display: grid; gap: 0; margin-top: auto; }
+.qa__row {
+    padding: var(--s3) 0;
+    border-top: 1px solid var(--glass-stroke-soft);
+}
+.qa__q {
+    display: flex; align-items: center; gap: var(--s2);
+    margin-bottom: var(--s1);
+    font-family: var(--mono);
+    font-size: 10px; font-weight: 650;
+    letter-spacing: .13em; text-transform: uppercase;
+    color: var(--text-muted);
+}
+.qa__q::before {
+    content: ""; flex: none;
+    width: 12px; height: 1px;
+    background: var(--card-accent, var(--text-muted));
+    opacity: .6;
+}
+.qa__a {
+    color: var(--text-body);
+    font-size: 14.5px; line-height: 1.68;
+    text-wrap: pretty;
+}
+.qa__a code {
+    padding: .1em .35em;
+    border: 1px solid var(--glass-stroke-soft);
+    border-radius: 5px;
+    background: var(--glass-fill-subtle);
+    color: var(--text-strong);
+    font-family: var(--mono); font-size: .88em;
+}
+
+/* 每张卡一个识别色：取自该产品自身样式表，仅用于色块与短横线，
+   不承担正文着色——文字色统一走墨阶，避免为了「统一」引入杂色。 */
+.card[data-accent="linkvault"]  { --card-accent: #6d8a22; }
+.card[data-accent="vtab"]       { --card-accent: #1769e0; }
+.card[data-accent="slowscroll"] { --card-accent: #5b5ee8; }
+@media (prefers-color-scheme: dark) {
+    .card[data-accent="linkvault"]  { --card-accent: #a8cc4a; }
+    .card[data-accent="vtab"]       { --card-accent: #7fb0f5; }
+    .card[data-accent="slowscroll"] { --card-accent: #a9abf9; }
+}
+
+/* ============================================================
+   8 · Footer
+   ============================================================ */
+.foot {
+    margin-top: var(--s8);
+    padding: var(--s5) var(--s6);
+    border-radius: var(--radius-lg);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--s5);
+    align-items: center;
+    font-size: 13.5px; color: var(--text-muted);
+    line-height: 1.65;
+}
+.foot p { max-width: 68ch; text-wrap: pretty; }
+.foot a {
+    font-family: var(--mono); font-size: 12px; white-space: nowrap;
+}
+
+/* ============================================================
+   9 · Entrance
+   只做一次、幅度极小。档案馆不该有飞入的卡片，只该有「浮现」。
+   ============================================================ */
+@keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+}
+.hero > * { animation: rise 640ms var(--ease) both; }
+.grid-head { animation: rise 640ms var(--ease) 80ms both; }
+.card { animation: rise 640ms var(--ease) both; animation-delay: calc(140ms + var(--i, 0) * 70ms); }
+.foot { animation: rise 640ms var(--ease) 420ms both; }
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+    }
+}
+
+/* ============================================================
+   10 · Responsive
+   ============================================================ */
+@media (max-width: 900px) {
+    .shell { padding: var(--s6) var(--s4) var(--s8); }
+    .hero { grid-template-columns: minmax(0, 1fr); }
+    .hero__title { max-width: 20ch; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--s4); }
+    .foot { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+    .shell { padding: var(--s5) var(--s3) var(--s7); }
+    .hero { padding-bottom: var(--s6); }
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .card { padding: var(--s4); }
+    .card__name { font-size: 24px; }
+    .foot { padding: var(--s4); }
+    .integrity li { font-size: 12px; }
+}
+
+/* ============================================================
+   11 · Print
+   商店审核与用户留存常需打印 / 存档。
+   ============================================================ */
+@media print {
+    .aurora { display: none; }
+    body { background: #fff; color: #000; font-size: 10.5pt; }
+    .shell { max-width: none; padding: 0; }
+    .lang, .skip-link, .integrity { display: none; }
+    .glass {
+        background: none; border: 1px solid #ccc; box-shadow: none;
+        -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .grid { grid-template-columns: 1fr 1fr; gap: 12pt; }
+    .hero__title { font-size: 24pt; }
+    .card, .hero > *, .foot, .grid-head { animation: none; }
+    .card { break-inside: avoid; }
+    /* 屏幕隐藏地址，打印必须显形，否则读者无从核对 */
+    .card__name a::after {
+        content: " (" attr(href) ")";
+        position: static; font-family: var(--mono); font-size: 7.5pt; color: #555;
+    }
+}
+</style>
 </head>
+
 <body>
-    <main>
-        <h1>Privacy Policies</h1>
-        <ul>
-            <li><a href="LinkVault/">LinkVault Browser Extension Privacy Policy</a></li>
-            <li><a href="vTab/">vTab New Tab Privacy Policy</a></li>
-            <li><a href="SlowScroll/">SlowScroll Privacy Policy</a></li>
-        </ul>
+<div class="aurora" aria-hidden="true"></div>
+
+<a class="skip-link" href="#policies" data-i18n="skip">Skip to policies</a>
+
+<div class="shell">
+
+    <header class="hero">
+        <div>
+            <p class="hero__eyebrow" data-i18n="eyebrow">Privacy Policies</p>
+            <!-- 占位文案刻意不含产品数量：不写死「三款」，避免脚本未执行时
+                 展示一个会随产品增加而立刻过时的数字。 -->
+            <h1 class="hero__title" data-i18n="heroTitle">Privacy policies, side by side.</h1>
+            <p class="hero__lede" data-i18n="lede"></p>
+            <ul class="integrity" id="integrity"></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Language">
+            <button type="button" data-lang="en" aria-pressed="true">English</button>
+            <button type="button" data-lang="zh" aria-pressed="false">中文</button>
+        </div>
+    </header>
+
+    <main id="policies">
+        <div class="grid-head">
+            <h2 data-i18n="listTitle">Policies</h2>
+            <span class="grid-head__count" id="count" aria-live="polite"></span>
+        </div>
+        <div class="grid" id="grid"></div>
     </main>
+
+    <footer class="foot glass">
+        <p data-i18n="foot"></p>
+        <a href="https://github.com/pseuo/LinkVault" rel="noopener noreferrer" target="_blank">github.com/pseuo/LinkVault</a>
+    </footer>
+</div>
+
+<noscript>
+    <!-- 无 JS 兜底：政策索引的可及性底线是「禁用 JS 也必须能到达政策」，
+         不是退化成一片空白。链接指向各产品英文版。 -->
+    <div class="shell">
+        <h1 style="font-family:var(--serif);font-size:34px;font-weight:500;margin-bottom:8px">Privacy Policies</h1>
+        <p style="margin-bottom:32px">This page needs JavaScript for the language switcher. The policies are listed below.</p>
+        <ul style="display:grid;gap:12px">
+            <li><a href="LinkVault/">LinkVault — Browser Extension Privacy Policy</a></li>
+            <li><a href="vTab/">vTab — New Tab Privacy Policy</a></li>
+            <li><a href="SlowScroll/">SlowScroll — Privacy Notice</a></li>
+        </ul>
+    </div>
+</noscript>
+
+<script>
+/* ============================================================
+   产品数据 · 单一数据源
+   ------------------------------------------------------------
+   ★ 要新增产品，只需要在这里加一项，页面自动多一张卡。
+     不需要动 HTML，也不需要改 CSS —— 网格用 auto-fill 自动排布。
+
+   每项字段：
+     id       唯一标识
+     accent   CSS 变量后缀，需在样式表里定义对应的 --card-accent
+     href     英文版路径；hrefZh 中文版路径（静态导出为 zh.html）
+     en/zh    { name 产品名, kind 品类, collects / sends / control 三问答案 }
+   ============================================================ */
+var PRODUCTS = [
+    {
+        id: 'linkvault',
+        accent: 'linkvault',
+        href: 'LinkVault/',
+        hrefZh: 'LinkVault/zh.html',
+        en: {
+            name: 'LinkVault',
+            kind: 'Save to LinkVault — browser extension',
+            collects: 'The page URL and title you choose to save, the link fields you fill in, and your extension settings — processed only when you trigger a save.',
+            sends: 'Only to the LinkVault service URL you configured yourself. No analytics SDKs, no advertising, no affiliate tracking.',
+            control: 'Stored in your browser profile. Uninstall the extension or rotate your token to revoke and delete it.'
+        },
+        zh: {
+            name: 'LinkVault',
+            kind: 'Save to LinkVault · 浏览器扩展',
+            collects: '你选择保存的页面 URL 与标题、你填写的链接字段，以及扩展设置——仅在你主动触发保存时处理。',
+            sends: '只发送给你自己配置的 LinkVault 服务地址。无统计 SDK、无广告、无联盟跟踪。',
+            control: '保存在你的浏览器配置文件中。卸载扩展或轮换 Token 即可撤销并删除。'
+        }
+    },
+    {
+        id: 'vtab',
+        accent: 'vtab',
+        href: 'vTab/',
+        hrefZh: 'vTab/zh.html',
+        en: {
+            name: 'vTab',
+            kind: 'Minimal new tab — browser extension',
+            collects: 'Account identifiers, bookmarks and settings you sync, search terms, and basic technical data such as IP address and browser type. Optional: prompts you submit to an AI feature.',
+            sends: 'go.boxove.com for sign-in and sync. Search terms go to the search provider you choose (such as Baidu) when suggestions are on.',
+            control: 'Turn off sync or sign out in settings. Email power@boxove.com to request deletion of your account and server-side data.'
+        },
+        zh: {
+            name: 'vTab',
+            kind: '极简新标签页 · 浏览器扩展',
+            collects: '账户标识、你主动同步的书签与设置、搜索词，以及 IP 地址、浏览器类型等基础技术信息。可选：你提交给 AI 功能的提示词。',
+            sends: '登录与同步走 go.boxove.com。启用搜索建议时，搜索词会发送给你选择的搜索服务（如百度）。',
+            control: '在设置中关闭同步或退出账户。发送邮件至 power@boxove.com 申请删除账户及服务器端数据。'
+        }
+    },
+    {
+        id: 'slowscroll',
+        accent: 'slowscroll',
+        href: 'SlowScroll/',
+        hrefZh: 'SlowScroll/zh.html',
+        en: {
+            name: 'SlowScroll',
+            kind: 'Slow auto-scroll — browser extension',
+            collects: 'Nothing. No personal identifiers, no browsing history, no page content.',
+            sends: 'Nowhere. The extension contains no <code>fetch</code>, <code>XHR</code>, <code>WebSocket</code>, or <code>sendBeacon</code> calls, and no third-party SDKs.',
+            control: 'Reset to defaults from the options page. Uninstalling removes all local data. The source is public under the MIT license.'
+        },
+        zh: {
+            name: '漫卷 SlowScroll',
+            kind: '慢速自动滚动 · 浏览器扩展',
+            collects: '无。不收集个人身份信息、不收集浏览历史、不收集页面内容。',
+            sends: '也不发往任何地方。扩展中不存在 <code>fetch</code>、<code>XHR</code>、<code>WebSocket</code> 或 <code>sendBeacon</code> 调用，也不含任何第三方 SDK。',
+            control: '在设置页一键恢复默认。卸载扩展即删除全部本地数据。源码以 MIT 许可公开。'
+        }
+    }
+];
+
+/* ============================================================
+   页面文案 · 与产品数据同源，切换语言时一起换
+   ============================================================ */
+var COPY = {
+    en: {
+        title: 'Privacy Policies',
+        skip: 'Skip to policies',
+        eyebrow: 'Privacy Policies',
+        listTitle: 'Policies',
+        heroTitle: function (n) {
+            /* 标题里的数字必须跟着 PRODUCTS.length 走。
+               写死「Three」的话，加到第四款产品时，全页最大的那行字
+               就成了假话——这是这类页面最容易埋的错。 */
+            var d = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+            return (d[n] || n) + ' extension' + (n === 1 ? '' : 's') +
+                   ', ' + (d[n] || n).toLowerCase() + ' data posture' + (n === 1 ? '' : 's') + '.';
+        },
+        lede: 'Every extension we publish has its own privacy policy. This page sets them all side by side — what each one collects, where that data goes, and how you take control back — so you can read the answer before installing anything.',
+        integrity: ['No cookies', 'No analytics', 'No external requests', 'Readable offline'],
+        qCollects: 'What is collected',
+        qSends: 'Where it goes',
+        qControl: 'Your control',
+        count: function (n) { return n + (n === 1 ? ' policy' : ' policies'); },
+        foot: 'Each policy page states its own effective date and version. Select a product to read its full policy in the language shown above. Nothing on this page is transmitted anywhere — it is a static file you can save and read offline.'
+    },
+    zh: {
+        title: '隐私政策',
+        skip: '跳到政策列表',
+        eyebrow: '隐私政策',
+        listTitle: '隐私政策',
+        heroTitle: function (n) { return n + ' 款扩展，' + n + ' 种数据立场。'; },
+        lede: '我们发布的每一款扩展都有各自的隐私政策。本页把它们并排列出——各自收集什么、数据发往哪里、你如何收回控制权——让你在安装之前就能读到答案。',
+        integrity: ['无 Cookie', '无统计脚本', '无外部请求', '离线可读'],
+        qCollects: '收集什么',
+        qSends: '发往哪里',
+        qControl: '你的控制',
+        count: function (n) { return n + ' 份政策'; },
+        foot: '各政策页均标注自身的生效日期与版本号。选择任一产品即可阅读完整政策，语言与上方所选一致。本页不向任何位置发送数据——它是一个可离线阅读的静态文件。'
+    }
+};
+
+/* ============================================================
+   渲染
+   ------------------------------------------------------------
+   语言纯净的做法不是「两份文案都塞进 DOM 再用 CSS 隐藏」，
+   而是同一时刻只往 DOM 写一种语言，切换时整体重绘。这样：
+     · 读屏软件不会碰到被隐藏的另一语言
+     · 复制页面文字不会混进另一种语言
+     · :lang 与实际可见内容始终一致
+   ============================================================ */
+(function () {
+    var root = document.documentElement;
+    var grid = document.getElementById('grid');
+    var countEl = document.getElementById('count');
+    var integrityEl = document.getElementById('integrity');
+
+    /* 文案里的 <code> 是我们自己写的可信标记：先整体转义，
+       再把 <code> 标签放行。这样数据源里任何意外的尖括号
+       都不会变成可执行标记。 */
+    function esc(s) {
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/&lt;code&gt;/g, '<code>').replace(/&lt;\/code&gt;/g, '</code>');
+    }
+
+    function qa(q, a) {
+        return '<div class="qa__row"><dt class="qa__q">' + esc(q) +
+               '</dt><dd class="qa__a">' + esc(a) + '</dd></div>';
+    }
+
+    function render(lang) {
+        var t = COPY[lang];
+        var isZh = lang === 'zh';
+
+        document.title = t.title;
+        root.setAttribute('data-lang', lang);
+        root.lang = isZh ? 'zh-CN' : 'en';
+
+        /* 文案节点：值可以是字符串，也可以是依赖产品数的函数
+           （标题里的数字必须随 PRODUCTS.length 变化）。 */
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n');
+            if (!t[k]) return;
+            el.textContent = typeof t[k] === 'function' ? t[k](PRODUCTS.length) : t[k];
+        });
+
+        integrityEl.innerHTML = t.integrity.map(function (s) {
+            return '<li>' + esc(s) + '</li>';
+        }).join('');
+
+        grid.innerHTML = PRODUCTS.map(function (p, i) {
+            var c = p[isZh ? 'zh' : 'en'];
+            var href = isZh ? p.hrefZh : p.href;
+            var num = (i + 1 < 10 ? '0' : '') + (i + 1);
+            return '' +
+            '<article class="card glass" data-accent="' + p.accent + '" style="--i:' + i + '">' +
+                '<div class="card__top">' +
+                    '<span class="card__num">' + num + '</span>' +
+                    '<h3 class="card__name"><a href="' + href + '">' + esc(c.name) + '</a></h3>' +
+                '</div>' +
+                '<p class="card__kind">' + esc(c.kind) + '</p>' +
+                '<dl class="qa">' +
+                    qa(t.qCollects, c.collects) +
+                    qa(t.qSends,    c.sends) +
+                    qa(t.qControl,  c.control) +
+                '</dl>' +
+            '</article>';
+        }).join('');
+
+        countEl.textContent = t.count(PRODUCTS.length);
+
+        document.querySelectorAll('.lang button').forEach(function (b) {
+            b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+        });
+    }
+
+    document.querySelectorAll('.lang button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var lang = btn.dataset.lang;
+            try { localStorage.setItem('pp-lang', lang); } catch (e) { /* 隐私模式忽略 */ }
+            render(lang);
+            /* 重绘会让焦点掉回 body。主动还给刚点的按钮，
+               否则键盘用户每切一次语言就得从头 Tab 一遍。 */
+            document.querySelector('.lang button[data-lang="' + lang + '"]').focus();
+        });
+    });
+
+    render(root.getAttribute('data-lang') === 'zh' ? 'zh' : 'en');
+})();
+</script>
 </body>
 </html>
