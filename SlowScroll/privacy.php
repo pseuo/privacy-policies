@@ -316,6 +316,13 @@ if ($lang === null) {
 }
 $T = $DOC[$lang];
 $other = $lang === 'zh' ? 'en' : 'zh';
+
+/* ---------- 语言切换目标 ----------
+   静态导出后没有 PHP 接管 ?lang=，链接必须指向真实文件，
+   否则发布后点「English」会停在中文页面上不动——静默失效。 */
+$langUrl = getenv('STATIC_EXPORT') === '1'
+  ? ($lang === 'zh' ? 'index.html' : 'zh.html')
+  : '?lang=' . $other;
 ?>
 <!doctype html>
 <html lang="<?= htmlspecialchars($T['lang'], ENT_QUOTES, 'UTF-8') ?>">
@@ -377,8 +384,8 @@ $other = $lang === 'zh' ? 'en' : 'zh';
       <div class="meta__item">
         <dt><?= htmlspecialchars($T['lang_label'], ENT_QUOTES, 'UTF-8') ?></dt>
         <dd>
-          <!-- 语言切换：同一页面换 query，hreflang 双向声明 -->
-          <a class="lang-switch" href="?lang=<?= $other ?>" hreflang="<?= $other === 'en' ? 'en' : 'zh-CN' ?>" rel="alternate">
+          <!-- 语言切换：PHP 环境走 query，静态导出走真实文件名 -->
+          <a class="lang-switch" href="<?= htmlspecialchars($langUrl, ENT_QUOTES, 'UTF-8') ?>" hreflang="<?= $other === 'en' ? 'en' : 'zh-CN' ?>" rel="alternate">
             <?= htmlspecialchars($T['lang_switch'], ENT_QUOTES, 'UTF-8') ?>
           </a>
         </dd>
