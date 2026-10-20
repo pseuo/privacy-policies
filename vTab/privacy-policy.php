@@ -203,7 +203,10 @@ $tocItems = $isEnglish ? [
 
     h1, h2 { margin: 0; color: var(--text-strong); line-height: 1.3; }
     p { margin: 0; }
-    ul, li { margin: 0; padding: 0; }
+    /* list-style 必须一起重置：只清 margin/padding 的话，浏览器默认的
+       圆点标记会挂在 padding-left: 0 的位置，在目录和要点列表左侧留下一列
+       多余的「点点点」。要点圆点由 .bullets li::before 自己绘制。 */
+    ul, li { margin: 0; padding: 0; list-style: none; }
     a { color: var(--color-info); text-decoration-thickness: 1px; text-underline-offset: 3px; }
     a:hover { color: var(--brand-600); }
     @media (prefers-color-scheme: dark) { a:hover { color: var(--brand-300); } }
